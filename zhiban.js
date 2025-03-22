@@ -360,6 +360,17 @@ function selectRange(start, end,boxclass) {
         const val = parseInt(box.dataset.value);
         box.classList.toggle('selected', val >= min && val <= max);
     });
+
+    const box = e.target.closest('.range-box');
+    if (box){
+        fretStart=start;
+        fretEnd=end;
+    }
+    const box_str = e.target.closest('.range-box');
+    if (box_str){
+        strStart=start;
+        strEnd=end;
+    }
 }
 
 
