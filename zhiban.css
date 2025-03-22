@@ -1,0 +1,409 @@
+body{
+    background-color:#666;
+}
+.panels-container{
+    display: flex;
+    gap: 2rem;
+    margin-top: 2rem;
+    width: 100%;
+}
+.app {
+    position: relative;
+    touch-action: none; /* 禁用浏览器默认触摸操作 */
+    user-select: none; /* 防止拖动时选中文本 */
+    max-width: 1000px;
+    margin: 0 auto;
+    justify-content: center;
+    padding: 20px;
+    background: #f0f0f0;
+    border-radius: 10px;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+
+    transition: /* 过度动画 */
+    width 0.2s ease,
+    height 0.2s ease,
+    transform 0.2s ease;
+}
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+.fretboard {
+    position: relative;
+    height: 300px;
+    border: 2px solid #65432100; 
+}
+.string {
+    position: absolute;
+    width:100%;
+    height: 1px;
+    background: #666;
+    z-index: 2;
+}
+.fret {
+    position: absolute;
+    width: 2px;
+    height: 100%;
+    background: #654321;
+    z-index: 2;
+}
+.note { position: absolute; width: 20px; height: 20px; border-radius: 50%; }
+.piano-key {
+    display: inline-block; width: 40px; height: 80px; border: 1px solid #000;
+    text-align: center; line-height: 80px; position: relative;
+}
+.black-key {
+    position: absolute; width: 24px; height: 50px; background: #000;
+    left: 28px; top: 0; z-index: 2; color: white;
+}
+#target {
+    background: #FFD700!important;
+    z-index: 99;
+    display: flex!important;
+    justify-content: center;
+    align-items: center;
+    color: #333;
+}
+.feedback {
+    position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    font-size: 100px; z-index: 999;
+}
+/* 新增琴枕样式 */
+.fret.nut {
+    background: #f8e6d9; /* 实心木质颜色 */
+    width: 20px; /* 加宽琴枕 */
+    left: 15px!important; /* 调整位置 */
+    z-index: 1;
+}
+/* 新增品位标记样式 */
+.fret-mark {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    background: #808080;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 0;
+    left: -999px;
+    top: 50%;
+    z-index: 0;
+}
+/* 新增动态位置标记 */
+[data-fret="3"] { left: calc(3 * 60px - 30px); }
+[data-fret="5"] { left: calc(5 * 60px - 30px); }
+[data-fret="7"] { left: calc(7 * 60px - 30px); }
+[data-fret="9"] { left: calc(9 * 60px - 30px); }
+[data-fret="12"] { left: calc(12 * 60px - 30px); }
+/* 琴弦粗细差异 */
+.string:nth-child(6) { height: 3px; background: #666; } /* 低音E */
+.string:nth-child(5) { height: 2.6px; background: #666; }
+.string:nth-child(4) { height: 2.2px; background: #777; }
+.string:nth-child(3) { height: 1.8px; background: #777; }
+.string:nth-child(2) { height: 1.4px; background: #888; }
+.string:nth-child(1) { height: 1px; background: #999; } /* 高音e */
+/* 指板弧形末端 */
+#fretboard:after {
+    content: '';
+    position: absolute;
+    right: -15px;
+    top: 0;
+    width: 815px;
+    height: 100%;
+    background: #2a1508;
+    border-radius: 15px 15px 15px 15px;
+    box-shadow: inset -5px 0 10px rgba(0,0,0,0.3);
+}
+/* 添加琴弦细节纹理 */
+.string {
+    background-image: linear-gradient(
+        to right,
+        rgba(255,255,255,0.2) 10%,
+        transparent 50%,
+        rgba(0,0,0,0.3) 90%
+    );
+    box-shadow: 0 0 2px rgba(0,0,0,0.2);
+}
+/* 柱体立体效果 */
+.fret:not(.nut):after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-right: 1px solid rgba(0,0,0,0.3);
+    border-left: 1px solid rgba(255,255,255,0.1);
+}
+/* 添加音阶提示标记 */
+.fret-scale-marker {
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    background: #FFD70033;
+    border: 2px solid #FFD700;
+    border-radius: 50%;
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+}
+/* 当前题目音高亮显示 */
+.practice-marker.active {
+    filter: drop-shadow(0 0 8px #FFD700);
+    animation: glow 1s ease infinite;
+}
+.note-label {
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: bold;
+    color: #2c3e50;
+    transform: translate(-50%, -50%);
+    z-index: 5; /* 确保在最上层 */
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.note-label:hover {
+    transform: translate(-50%, -50%) scale(1.1);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+/* 整体钢琴容器 */
+.piano {
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+    background: #f0f0f0;
+    border-radius: 10px;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+}
+/* 白键基础样式 */
+.piano-key {
+    position: relative;
+    width: 60px;
+    height: 100px;
+    margin: 0px;
+    background: linear-gradient(to bottom, #fff 0%, #f8f8f8 100%);
+    border-radius: 0 0 5px 5px;
+    box-shadow: 
+        0 5px 0 #ddd,
+        0 10px 15px rgba(0,0,0,0.1);
+    transition: all 0.1s ease;
+    cursor: pointer;
+    overflow: hidden;
+}
+/* 白键交互效果 */
+.piano-key:hover {
+    background: linear-gradient(to bottom, #f8f8f8 0%, #f0f0f0 100%);
+}
+.piano-key:active {
+    transform: translateY(3px);
+    box-shadow: 
+        0 2px 0 #ddd,
+        0 5px 10px rgba(0,0,0,0.1);
+}
+/* 基础样式 */
+.piano-key.blk {
+    position: relative;
+    width: 48px;
+    height: 20px;
+    margin: 0 2px;
+    background: linear-gradient(to bottom, #fff 0%, #f8f8f8 100%);
+    border-radius: 0 0 5px 5px;
+    box-shadow: 
+        0 5px 0 #ddd,
+        0 10px 15px rgba(0,0,0,0.1);
+    transition: all 0.1s ease;
+    cursor: pointer;
+}
+/* 黑键样式 */
+.black-key {
+    position: absolute;
+    width: 38px;
+    height: 170px;
+    background: linear-gradient(to bottom, #333 0%, #000 100%);
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 2;
+    border-radius: 0 0 4px 4px;
+    box-shadow: 
+        inset 0 -2px 2px rgba(255,255,255,0.2),
+        0 3px 5px rgba(0,0,0,0.3);
+    color: white;
+    line-height: 120px;
+    font-size: 12px;
+}
+/* 音名字体样式 */
+.piano-key:not(.black-key) {
+    font-size: 14px;
+    color: #444;
+    text-shadow: 0 1px 1px rgba(0,0,0,0.1);
+    padding-top: 160px;
+}
+.black-key div {
+    font-size: 12px;
+    transform: translateY(-60px);
+}
+/* 琴键间隔调整 */
+.piano-key[data-note$="#"] {
+    margin: 0 -25px; /* 让黑键覆盖相邻白键 */
+    z-index: 1;
+}
+/* 添加以下样式到zhiban.css */
+.controls {
+    margin-top: 2rem;
+    padding: 1rem;
+    background: rgba(240, 240, 240, 0.9);
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+.control-group {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    justify-content: center;
+}
+.styled-btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    background: #f0f0f0;
+    color: #333;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 2px solid #ddd;
+}
+.styled-btn:hover {
+    background: #e0e0e0;
+}
+.styled-btn:hover {
+    background: #e0e0e0;
+    transform: translateY(-1px);
+}
+.styled-btn.primary {
+    background: #4CAF50;
+    color: white;
+    border-color: #45a049;
+}
+.styled-btn.secondary {
+    background: #2196F3;
+    color: white;
+    border-color: #1976D2;
+}
+.styled-select {
+    padding: 10px 15px;
+    border-radius: 8px;
+    border: 2px solid #ddd;
+    background: white;
+    font-size: 14px;
+    appearance: none;
+    -webkit-appearance: none;
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 12px auto;
+    padding-right: 35px;
+}
+
+
+#range-selector {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+    gap: 0;
+    padding: 10px;
+    background: #f0f8ff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.range-box {
+    width: 32px;
+    height: 32px;
+    background: linear-gradient(145deg, #6aa8ff, #4d8eff);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    color: white;
+    user-select: none;
+    border: 2px solid #fff;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.range-box:hover {
+    transform: scale(1.1);
+    z-index: 1;
+}
+
+.range-box.selected {
+    background: linear-gradient(145deg, #6dd400, #5bb800);
+    box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+}
+
+/* 添加序号装饰 */
+.range-box::after {
+    content: attr(data-value);
+    position: absolute;
+    bottom: -20px;
+    font-size: 10px;
+    color: #666;
+    opacity: 0.8;
+}
+
+#range-selector-string {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+    gap: 0;
+    padding: 10px;
+    background: #f0f8ff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.range-box-string {
+    width: 32px;
+    height: 32px;
+    background: linear-gradient(145deg, #6aa8ff, #4d8eff);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    color: white;
+    user-select: none;
+    border: 2px solid #fff;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.range-box-string:hover {
+    transform: scale(1.1);
+    z-index: 1;
+}
+
+.range-box-string.selected {
+    background: linear-gradient(145deg, #6dd400, #5bb800);
+    box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+}
+
+/* 添加序号装饰 */
+.range-box-string::after {
+    content: attr(data-value);
+    position: absolute;
+    bottom: -20px;
+    font-size: 10px;
+    color: #666;
+    opacity: 0.8;
+}
+
+
