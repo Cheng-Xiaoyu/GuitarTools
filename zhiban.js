@@ -362,10 +362,26 @@ function selectRange(start, end,boxclass) {
     });
 
     if (boxclass===".range-box"){
+        if (!isSelecting) return;
+        isSelecting = false;
+        
+        const selected = [...document.querySelectorAll('.range-box.selected')]
+            .map(box => parseInt(box.dataset.value));
+        
+        const start = Math.min(...selected);
+        const end = Math.max(...selected);
         fretStart=start;
         fretEnd=end;
+
     }
     if (boxclass===".range-box-string"){
+        if (!isSelecting) return;
+        isSelecting = false;
+        
+        const selected = [...document.querySelectorAll('.range-box-string.selected')]
+            .map(box => parseInt(box.dataset.value));
+        const start = Math.min(...selected);
+        const end = Math.max(...selected);
         strStart=start;
         strEnd=end;
     }
