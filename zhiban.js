@@ -361,13 +361,11 @@ function selectRange(start, end,boxclass) {
         box.classList.toggle('selected', val >= min && val <= max);
     });
 
-    const box = e.target.closest('.range-box');
-    if (box){
+    if (boxclass===".range-box"){
         fretStart=start;
         fretEnd=end;
     }
-    const box_str = e.target.closest('.range-box');
-    if (box_str){
+    if (boxclass===".range-box-string"){
         strStart=start;
         strEnd=end;
     }
