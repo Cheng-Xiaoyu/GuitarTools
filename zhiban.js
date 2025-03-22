@@ -255,192 +255,103 @@ document.querySelectorAll('.piano-key').forEach(key => {
 
 
 //**选择品范围和弦范围 *////////////////////////////////////////////////////
-// 鼠标事件处理
-
-let isSelecting = false;
-let startBox = null;
-let isSelectingstr=false;
-let startBoxstr=null;
-
-let fretStart=0;
-let fretEnd=12;
-let strStart=0;
-let strEnd=6;
+let fretStart = 0;
+let fretEnd = 12;
+let strStart = 1;
+let strEnd = 6;
 
 const selector = document.getElementById('range-selector');
 
-selector.addEventListener('mousedown', e => {
+// 处理品范围点击
+selector.addEventListener('click', e => {
     const box = e.target.closest('.range-box');
-    if (box){
-        isSelecting = true;
-        startBox = box;
-        clearSelection('.range-box');
-        selectRange(box.dataset.value, box.dataset.value,'.range-box');
-    }
-
-
-    const box_str = e.target.closest('.range-box-string');
-    if (box_str) {
-        isSelectingstr = true;
-        startBoxstr = box_str;
-        clearSelection('.range-box-string');
-        selectRange(box_str.dataset.value, box_str.dataset.value,'.range-box-string');
-    }
-
-});
-
-document.addEventListener('mousemove', e => {
-    if (!isSelecting) return;
-    
-    const endBox = e.target.closest('.range-box');
-    if (!endBox || !selector.contains(endBox)) return;
-    
-    selectRange(startBox.dataset.value, endBox.dataset.value,'.range-box');
-});
-
-document.addEventListener('mouseup', () => {
-    if (!isSelecting) return;
-    isSelecting = false;
-    
-    const selected = [...document.querySelectorAll('.range-box.selected')]
-        .map(box => parseInt(box.dataset.value));
-    
-    const start = Math.min(...selected);
-    const end = Math.max(...selected);
-    fretStart=start;
-    fretEnd=end;
-});
-
-// 触摸事件处理
-selector.addEventListener('touchstart', e => {
-    const box = document.elementFromPoint(
-        e.touches[0].clientX,
-        e.touches[0].clientY
-    )?.closest('.range-box');
     if (!box) return;
     
-    e.preventDefault();
-    isSelecting = true;
-    startBox = box;
-    clearSelection();
-    selectRange(box.dataset.value, box.dataset.value,'.range-box');
+    const value = parseInt(box.dataset.value);
+    handleSelection(value, '.range-box', 'fret');
 });
 
-document.addEventListener('touchmove', e => {
-    if (!isSelecting) return;
+// 处理弦范围点击
+selector.addEventListener('click', e => {
+    const box = e.target.closest('.range-box-string');
+    if (!box) return;
     
-    const endBox = document.elementFromPoint(
-        e.touches[0].clientX,
-        e.touches[0].clientY
-    )?.closest('.range-box');
+    const value = parseInt(box.dataset.value);
+    handleSelection(value, '.range-box-string', 'str');
+});
+
+// 通用处理函数
+function handleSelection(value, selectorType, prefix) {
+    const currentStart = window[`${prefix}Start`];
+    const currentEnd = window[`${prefix}End`];
     
-    if (endBox && selector.contains(endBox)) {
-        selectRange(startBox.dataset.value, endBox.dataset.value,'.range-box');
+    // 第一阶段：未选择任何值
+    if (currentStart === undefined || currentEnd === undefined 
+        || currentStart===null || currentEnd===null) {
+        window[`${prefix}Start`] = value;
+        window[`${prefix}End`] = value;
+        clearSelection(selectorType);
+        selectSingle(value, selectorType);
+        if(selectorType==".range-box"){
+            fretStart=value;
+            fretEnd=value;
+        }
+        if(selectorType==".range-box-string"){
+            strStart=value;
+            strEnd=value;
+        }
+        return;
     }
-});
 
-document.addEventListener('touchend', () => {
-    isSelecting = false;
-});
+    // 第二阶段：已选择单个值
+    if (currentStart === currentEnd) {
+        window[`${prefix}End`] = value;
+        const start = Math.min(currentStart, value);
+        const end = Math.max(currentStart, value);
+        selectRange(start, end, selectorType);
+        if(selectorType==".range-box"){
+            fretStart=start;
+            fretEnd=end;
+        }
+        if(selectorType==".range-box-string"){
+            strStart=start;
+            strEnd=end;
+        }
+        return;
+    }
+    else{
+        resetSelection(selectorType, prefix);
+    }
+
+}
 
 // 辅助函数
-function clearSelection(boxclass) {
-    document.querySelectorAll(boxclass).forEach(box => {
+function resetSelection(selectorType, prefix) {
+    window[`${prefix}Start`] = null;
+    window[`${prefix}End`] = null;
+    clearSelection(selectorType);
+}
+
+function selectSingle(value, selectorType) {
+    document.querySelectorAll(selectorType).forEach(box => {
+        if (parseInt(box.dataset.value) === value) {
+            box.classList.add('selected');
+        }
+    });
+}
+
+function clearSelection(selectorType) {
+    document.querySelectorAll(selectorType).forEach(box => {
         box.classList.remove('selected');
     });
 }
 
-function selectRange(start, end,boxclass) {
-    const startVal = parseInt(start);
-    const endVal = parseInt(end);
-    const min = Math.min(startVal, endVal);
-    const max = Math.max(startVal, endVal);
-
-    document.querySelectorAll(boxclass).forEach(box => {
+function selectRange(start, end, selectorType) {
+    clearSelection(selectorType);
+    document.querySelectorAll(selectorType).forEach(box => {
         const val = parseInt(box.dataset.value);
-        box.classList.toggle('selected', val >= min && val <= max);
+        if (val >= start && val <= end) {
+            box.classList.add('selected');
+        }
     });
-
-    if (boxclass===".range-box"){
-        if (!isSelecting) return;
-        isSelecting = false;
-        
-        const selected = [...document.querySelectorAll('.range-box.selected')]
-            .map(box => parseInt(box.dataset.value));
-        
-        const start = Math.min(...selected);
-        const end = Math.max(...selected);
-        fretStart=start;
-        fretEnd=end;
-
-    }
-    if (boxclass===".range-box-string"){
-        if (!isSelecting) return;
-        isSelecting = false;
-        
-        const selected = [...document.querySelectorAll('.range-box-string.selected')]
-            .map(box => parseInt(box.dataset.value));
-        const start = Math.min(...selected);
-        const end = Math.max(...selected);
-        strStart=start;
-        strEnd=end;
-    }
 }
-
-
-/////////////////////////////////////////////
-
-document.addEventListener('mousemove', e => {
-    if (!isSelectingstr) return;
-    
-    const endBox = e.target.closest('.range-box-string');
-    if (!endBox || !selector.contains(endBox)) return;
-    
-    selectRange(startBoxstr.dataset.value, endBox.dataset.value,'.range-box-string');
-});
-
-document.addEventListener('mouseup', () => {
-    if (!isSelectingstr) return;
-    isSelectingstr = false;
-    
-    const selected = [...document.querySelectorAll('.range-box-string.selected')]
-        .map(box => parseInt(box.dataset.value));
-    
-    const start = Math.min(...selected);
-    const end = Math.max(...selected);
-    strStart=start;
-    strEnd=end;
-});
-
-// 触摸事件处理
-selector.addEventListener('touchstart', e => {
-    const box = document.elementFromPoint(
-        e.touches[0].clientX,
-        e.touches[0].clientY
-    )?.closest('.range-box-string');
-    if (!box) return;
-    
-    e.preventDefault();
-    isSelectingstr = true;
-    startBoxstr = box;
-    clearSelection();
-    selectRange(box.dataset.value, box.dataset.value,'.range-box-string');
-});
-
-document.addEventListener('touchmove', e => {
-    if (!isSelectingstr) return;
-    
-    const endBox = document.elementFromPoint(
-        e.touches[0].clientX,
-        e.touches[0].clientY
-    )?.closest('.range-box-string');
-    
-    if (endBox && selector.contains(endBox)) {
-        selectRange(startBoxstr.dataset.value, endBox.dataset.value,'.range-box-string');
-    }
-});
-
-document.addEventListener('touchend', () => {
-    isSelectingstr = false;
-});
-
